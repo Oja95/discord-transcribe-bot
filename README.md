@@ -1,6 +1,5 @@
-# Getting Started app for Discord
-
-This project contains a basic Discord app written in JavaScript, built base on the [getting started guide](https://discord.com/developers/docs/getting-started).
+# Audio message transcriber Discord bot
+This project contains a basic Discord app written in JavaScript, built base on the [getting started guide](https://discord.com/developers/docs/getting-started). It's goal is to obtain the latest (or specified) message that contains an audio recording attachment, send it to speech recongition AI and return the transcribed result back to Discord.
 
 ## Project structure
 Below is a basic overview of the project structure:
@@ -27,7 +26,7 @@ Configuring the app is covered in detail in the [getting started guide](https://
 
 First clone the project:
 ```
-git clone https://github.com/Oja95/discord-transcribe-bot.git
+git clone git@github.com:Oja95/discord-transcribe-bot.git
 ```
 
 Then navigate to its directory and install dependencies:
@@ -53,6 +52,11 @@ The commands for the example app are set up in `commands.js`. All of the command
 ```
 npm run register
 ```
+
+### Commands
+This bot defines two commands:
+* `/what-did-you-say` - Fetches the last 50 messages sent in the channel where the command was invoked and looks up the latest message with voice message attachments. 
+* `/what-did-you-say-id <messageid>` - Fetches the messsage with provided message identifier and assumes it has voice message attachment
 
 ### Run the app
 
