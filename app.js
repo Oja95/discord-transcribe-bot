@@ -2,30 +2,26 @@ import 'dotenv/config';
 import express from 'express';
 import {
   InteractionType,
-  InteractionResponseType,
-  InteractionResponseFlags,
-  MessageComponentTypes,
-  ButtonStyleTypes,
+  InteractionResponseType
 } from 'discord-interactions';
-import { VerifyDiscordRequest, getRandomEmoji, DiscordRequest } from './utils.js';
-import { getShuffledOptions, getResult } from './game.js';
+import { VerifyDiscordRequest, DiscordRequest, DeepInfraRequest } from './utils.js';
 
 // Create an express app
 const app = express();
+
 // Get port, or default to 3000
 const PORT = process.env.PORT || 3000;
+
 // Parse request body and verifies incoming requests using discord-interactions package
 app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
-
-// Store for in-progress games. In production, you'd want to use a DB
-const activeGames = {};
 
 /**
  * Interactions endpoint URL where Discord will send HTTP requests
  */
 app.post('/interactions', async function (req, res) {
-  // Interaction type and data
-  const { type, id, data } = req.body;
+
+  console.log(req.body);
+  const { type, id, data, channel_id, token } = req.body;
 
   /**
    * Handle verification requests
@@ -41,16 +37,78 @@ app.post('/interactions', async function (req, res) {
   if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
 
-    // "test" command
-    if (name === 'test') {
-      // Send a message into the channel where command was triggered from
-      return res.send({
-        type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+    if (name === 'what-did-you-say' || name === 'what-did-you-say-id') {
+      let audioFileUrl;
+
+      if (name === 'what-did-you-say-id') {
+        const messageId = data?.options[0]?.value;
+        var response = await DiscordRequest(`channels/${channel_id}/messages/${messageId}`, { method: 'GET'});
+
+        if (!response.ok) {
+          res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: `Failed to fetch channel message with ID ${messageId}!`
+            }
+          });
+          return;
+        }
+
+        const messagesData = await response.json();
+        const suitableAudioAttachments = messagesData.attachments.filter(attachment => attachment.filename.endsWith(".ogg"));
+
+        if (suitableAudioAttachments.length > 0) {
+          audioFileUrl = suitableAudioAttachments[0].url;
+        } else {
+          res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: `Found no audio file to process with given ID ${messageId}! :(`
+            }
+          });
+          return;
+        }
+      } else if (name === 'what-did-you-say') {
+        // Gets the last 50 messages. Assuming that the order is latest messages first
+        var response = await DiscordRequest(`channels/${channel_id}/messages`, { method: 'GET'});
+        const data = await response.json();
+
+        const audioMessages = data.filter(message => message.attachments.length > 0 && message.attachments.filter(attachment => attachment.filename.endsWith(".ogg")).length > 0);
+        if (audioMessages.length > 0) {
+          audioFileUrl = audioMessages[0].attachments.filter(attachment => attachment.filename.endsWith(".ogg"))[0].url;
+        } else {
+          res.send({
+            type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+            data: {
+              content: `Found no audio file to process within the last 50 channel messages!`
+            }
+          });
+          return;
+        }
+      
+      }
+
+      res.send({
+        type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
         data: {
-          // Fetches a random emoji to send from a helper function
-          content: 'hello world ' + getRandomEmoji(),
+          content: `Found voice message, processing.`
         },
       });
+      
+      var aiResponse = await DeepInfraRequest(audioFileUrl);
+      const aiData = await aiResponse.json();
+
+      console.log(`Transcription result: ${aiData.text}`);
+
+      // Modifies the original 'Bot is thinking' text with the result.
+      await DiscordRequest(`webhooks/1208078761807847434/${token}/messages/@original`,  
+          { method: 'PATCH',
+            body: {
+              content: `${aiData.text}`
+            }
+          }
+        );
+      return;
     }
   }
 });
