@@ -1,10 +1,21 @@
 import 'dotenv/config';
 import express from 'express';
+import fs from 'fs'
+import * as https from 'https';
 import {
   InteractionType,
   InteractionResponseType
 } from 'discord-interactions';
 import { VerifyDiscordRequest, DiscordRequest, DeepInfraRequest } from './utils.js';
+
+
+var key = fs.readFileSync(process.env.SSL_KEY_PATH);
+var cert = fs.readFileSync(process.env.SSL_CERT_PATH);
+var options = {
+  key: key,
+  cert: cert
+};
+
 
 // Create an express app
 const app = express();
@@ -14,6 +25,8 @@ const PORT = process.env.PORT || 3000;
 
 // Parse request body and verifies incoming requests using discord-interactions package
 app.use(express.json({ verify: VerifyDiscordRequest(process.env.PUBLIC_KEY) }));
+
+
 
 /**
  * Interactions endpoint URL where Discord will send HTTP requests
@@ -111,8 +124,10 @@ app.post('/interactions', async function (req, res) {
       return;
     }
   }
-});
+}); 
 
-app.listen(PORT, () => {
+var server = https.createServer(options, app);
+
+server.listen(PORT, () => {
   console.log('Listening on port', PORT);
 });
