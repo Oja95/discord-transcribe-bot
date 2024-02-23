@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import fs from 'fs'
+import * as http from 'https';
 import * as https from 'https';
 import {
   InteractionType,
@@ -126,8 +127,13 @@ app.post('/interactions', async function (req, res) {
   }
 }); 
 
-var server = https.createServer(options, app);
+var httpServer = http.createServer(app);
+var httpsServer = https.createServer(options, app);
 
-server.listen(PORT, () => {
-  console.log('Listening on port', PORT);
+httpsServer.listen(PORT, () => {
+  console.log('HTTPS listening on port', PORT);
+});
+
+httpServer.listen(8080, () => {
+  console.log('HTTP listening on port', 8080);
 });
