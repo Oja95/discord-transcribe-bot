@@ -125,7 +125,8 @@ app.post('/interactions', async function (req, res) {
       {
         method: 'PATCH',
         body: {
-          content: `${messageLink}:\n${aiData.text}`,
+          // <link> causes embeds to not happen, which removes the huge box for Discord links
+          content: `[Message](<${messageLink}>):\n${aiData.text}`,
         }
       }
     );
