@@ -10,7 +10,7 @@ const TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND = {
 // Command containing options
 const TRANSCRIBE_AUDIO_MESSAGE_COMMAND = {
   name: 'what-did-you-say-id',
-  description: 'Transcribe a voice message in this channel for the provided message identifier. Input can be either an actual message ID, or a link to the desired message.',
+  description: 'Transcribe a voice message in this channel for the provided message identifier.',
   type: 1,
   options: [
     {
