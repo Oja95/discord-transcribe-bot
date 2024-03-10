@@ -125,7 +125,7 @@ app.post('/interactions', async function (req, res) {
       {
         method: 'PATCH',
         body: {
-          content: `${messageLink}:\n${aiData.text}`,
+          content: `${aiData.text}`,
         }
       }
     );
