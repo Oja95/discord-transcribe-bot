@@ -38,15 +38,16 @@ app.post('/interactions', async function (req, res) {
     const { name } = data;
 
     // could be imported from commands.js
-    const commands = ['what-did-you-say-id', 'what-did-you-say', 'uwotm8']
+    // TODO: Obtain these in a dynamic way via commands.js#ALL_COMMANDS
+    const commands = ['what-did-you-say-id', 'what-did-you-say', 'uwotm8', 'summary'];
 
     if (!commands.includes(name)) {
       // default to answering at least something on invalid use
-      res.status(400).send("invalid request, no valid discord command included\n");
+      res.status(400).send("invalid request, no valid discord command included.");
       return;
     }
 
-    let audioFileUrl;
+    let audioFileUrls = [];
     let messageLink;
 
     if (name === 'what-did-you-say-id') {
@@ -56,7 +57,7 @@ app.post('/interactions', async function (req, res) {
       // link format is: discord.com/channels/guild-id/channel-id/message-id
       const re = /https?:\/\/discord.com\/channels\/\d+\/\d+\/(\d+)/;
       const re_match = messageId.match(re);
-      if (re_match.length === 2) {
+      if (re_match && re_match.length === 2) {
         // save link for later use
         messageLink = messageId;
         messageId = re_match[1];
@@ -78,7 +79,7 @@ app.post('/interactions', async function (req, res) {
       const suitableAudioAttachments = messagesData.attachments.filter(attachment => attachment.filename.endsWith(".ogg"));
 
       if (suitableAudioAttachments.length > 0) {
-        audioFileUrl = suitableAudioAttachments[0].url;
+        audioFileUrls.push(suitableAudioAttachments[0].url);
       } else {
         res.send({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -95,8 +96,8 @@ app.post('/interactions', async function (req, res) {
 
       const audioMessages = data.filter(message => message.attachments.length > 0 && message.attachments.filter(attachment => attachment.filename.endsWith(".ogg")).length > 0);
       if (audioMessages.length > 0) {
-        audioFileUrl = audioMessages[0].attachments.filter(attachment => attachment.filename.endsWith(".ogg"))[0].url;
-        messageLink = `https://discord.com/channels/${guild.id}/${audioMessages[0].channel_id}/${audioMessages[0].id}`;
+        audioFileUrls.push(audioMessages[0].attachments.filter(attachment => attachment.filename.endsWith(".ogg"))[0].url);
+        // messageLink = `https://discord.com/channels/${guild.id}/${audioMessages[0].channel_id}/${audioMessages[0].id}`;
       } else {
         res.send({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -106,26 +107,55 @@ app.post('/interactions', async function (req, res) {
         });
         return;
       }
+    } else if (name === 'summary') {
+      let options = data?.options;
+      let limit = options && options.length > 0 ? options[0]?.value : 50;
+
+      var response = await DiscordRequest(`channels/${channel_id}/messages?limit=${limit}`, { method: 'GET' });
+      const messagesData = await response.json();
+
+      // Flip the array it the messages are in chronological order
+      messagesData.reverse();
+      const audioMessages = messagesData.filter(message => message.attachments.length > 0 && message.attachments.filter(attachment => attachment.filename.endsWith(".ogg")).length > 0);
+    
+      if (audioMessages.length > 0) {
+        audioFileUrls = audioMessages.flatMap(message => message.attachments).filter(attachment => attachment.filename.endsWith(".ogg")).map(attach => attach.url);
+      } else {
+        res.send({
+          type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+          data: {
+            content: `Found no audio files to process within the last ${limit} channel messages!`
+          }
+        });
+        return;
+      }
     }
 
     res.send({
       type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
       data: {
-        content: `Found voice message, processing.`
+        content: `Found voice message(s), processing.`
       },
     });
 
-    var aiResponse = await DeepInfraRequest(audioFileUrl);
-    const aiData = await aiResponse.json();
+  
+    const transcriptionResults = await Promise.all(audioFileUrls.map(async audioUrl => {
+      var aiResponse = await DeepInfraRequest(audioUrl);
+      const aiData = await aiResponse.json();
+      return aiData.text;
+    }));
+    
+    const responseString = transcriptionResults.join('\n\n');
+    
 
-    console.log(`Transcription result: ${aiData.text}`);
+    console.log(`Transcription result: ${responseString}`);
 
     // Modifies the original 'Bot is thinking' text with the result.
     await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`,
       {
         method: 'PATCH',
         body: {
-          content: `${aiData.text}`,
+          content: `${responseString}`,
         }
       }
     );
