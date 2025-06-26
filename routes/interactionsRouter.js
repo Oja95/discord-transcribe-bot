@@ -13,7 +13,7 @@ export async function handleInteraction(req, res) {
     const { name } = data;
 
     if (name === 'text-summary') {
-      await handleTextSummaryCommand(data, channel_id, res);
+      await handleTextSummaryCommand(data, channel_id, req.body, res);
     } else {
       await handleAudioTranscriptionCommand(name, data, channel_id, req.body, res);
     }

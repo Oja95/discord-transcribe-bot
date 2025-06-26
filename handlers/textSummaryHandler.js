@@ -1,12 +1,8 @@
-import OpenAI from "openai";
 import { InteractionResponseType } from 'discord-interactions';
 import {DiscordRequest} from '../services/discord.js';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
-export async function handleTextSummaryCommand(data, channel_id, res) {
+export async function handleTextSummaryCommand(data, channel_id, body, res) {
+  const { token } = body;
   const limit = data?.options?.[0]?.value || 100;
 
   const discordResponse = await DiscordRequest(`channels/${channel_id}/messages?limit=${limit}`, {
@@ -37,32 +33,27 @@ export async function handleTextSummaryCommand(data, channel_id, res) {
     return;
   }
 
+  res.send({
+    type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `Found message(s), processing.`
+    },
+  });
+
   try {
-    const summaryRes = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "system",
-          content: "You are a helpful assistant that summarizes Discord conversations.",
-        },
-        {
-          role: "user",
-          content: `Summarize the following Discord messages:\n\n${textMessages}`,
-        },
-      ],
-    });
+    const summary = await summarizeMessages(textMessages);
 
-    const summary = summaryRes.choices[0].message.content;
-
-    res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: { content: summary },
+    await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`, {
+      method: 'PATCH',
+      body: { content: summary },
     });
   } catch (err) {
-    console.error("OpenAI API error:", err);
-    res.send({
-      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
-      data: { content: `Something went wrong while generating the summary.` },
+    console.error('OpenAI error:', err);
+    await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`, {
+      method: 'PATCH',
+      body: {
+        content: `❌ Something went wrong while generating the summary.`,
+      },
     });
   }
 }

@@ -57,6 +57,13 @@ export async function handleAudioTranscriptionCommand(name, data, channel_id, bo
     audioFileUrls.push(audioMessages[0].attachments.find(a => a.filename.endsWith(".ogg")).url);
   }
 
+  res.send({
+    type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
+    data: {
+      content: `Found voice message(s), processing.`
+    },
+  });
+
   const transcriptionResults = await Promise.all(audioFileUrls.map(async url => {
     const aiResponse = await DeepInfraRequest(url);
     const aiData = await aiResponse.json();
