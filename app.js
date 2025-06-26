@@ -130,14 +130,6 @@ app.post('/interactions', async function (req, res) {
         return;
       }
     }
-
-    res.send({
-      type: InteractionResponseType.DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE,
-      data: {
-        content: `Found voice message(s), processing.`
-      },
-    });
-
   
     const transcriptionResults = await Promise.all(audioFileUrls.map(async audioUrl => {
       var aiResponse = await DeepInfraRequest(audioUrl);
