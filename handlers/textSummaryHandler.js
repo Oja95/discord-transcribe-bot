@@ -29,6 +29,7 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
 
   try {
     const messages = await fetchChannelMessages(channel_id, limit);
+    console.log(`To be summarized: ${messages}`);
 
     const textMessages = messages
         .filter(m => m.content && !m.author.bot)
