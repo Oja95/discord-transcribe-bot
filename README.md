@@ -5,10 +5,19 @@ This project contains a basic Discord app written in JavaScript, built base on t
 Below is a basic overview of the project structure:
 
 ```
-├── .env        -> sample .env file
-├── app.js      -> main entrypoint for app
-├── commands.js -> slash command payloads + helpers
-├── utils.js    -> utility functions and enums
+├── .env                        # Environment variables (e.g., tokens, API keys)
+├── app.js                      # Express entrypoint and interaction route registration
+├── routes/
+│   └── interactionsRouter.js   # Main Discord interactions handler (slash command router)
+├── handlers/
+│   ├── audioTranscribeHandler.js  # Handles audio transcription commands via DeepInfra
+│   └── textSummaryHandler.js      # Handles text message summarization using OpenAI
+├── commands/
+│   └── index.js                # Slash command definitions (e.g. text-summary, uwotm8)
+├── utils/
+│   ├── discord.js              # Discord API utilities (request wrapper, signature verification, etc.)
+│   ├── deepinfra.js            # DeepInfra integration for audio transcription
+│   └── openai.js               # OpenAI integration for text summarization
 ├── package.json
 ├── README.md
 └── .gitignore
@@ -47,7 +56,7 @@ Additionally, this bot implementation relies on the [DeepInfra Automatic Speech 
 
 ### Install slash commands
 
-The commands for the example app are set up in `commands.js`. All of the commands in the `ALL_COMMANDS` array at the bottom of `commands.js` will be installed when you run the `register` command configured in `package.json`:
+The commands for the example app are set up in `index.js`. All of the commands in the `ALL_COMMANDS` array at the bottom of `index.js` will be installed when you run the `register` command configured in `package.json`:
 
 ```
 npm run register

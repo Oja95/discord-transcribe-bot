@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { InstallGlobalCommands } from './utils.js';
+import {InstallGlobalCommands} from '../services/discord.js';
 
 const TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND = {
   name: 'what-did-you-say',
@@ -34,9 +34,21 @@ description: 'Fetches last n (default 50) messages, extracts all voice messages,
   ]
 };
 
+const TEXT_SUMMARY_COMMAND = {
+  name: 'text-summary',
+  description: 'Fetches last n (default 300) messages, summarizes.',
+  type: 1,
+  options: [
+    {
+      type: 4,
+      name: 'limit',
+      description: 'Amount of messages to look back (max 1000).'
+    }
+  ]
+};
 
 const TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND_ALIAS = { ...TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND, name: 'uwotm8' }
 
-const ALL_COMMANDS = [SUMMARY_COMMAND, TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND, TRANSCRIBE_AUDIO_MESSAGE_COMMAND, TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND_ALIAS];
+export const ALL_COMMANDS = [SUMMARY_COMMAND, TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND, TRANSCRIBE_AUDIO_MESSAGE_COMMAND, TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND_ALIAS, TEXT_SUMMARY_COMMAND];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
