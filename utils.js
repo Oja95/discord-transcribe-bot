@@ -2,6 +2,11 @@ import 'dotenv/config';
 import fetch from 'node-fetch';
 import { verifyKey } from 'discord-interactions';
 import streamToBlob from 'stream-to-blob';
+import {OpenAI} from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
 
 export function VerifyDiscordRequest(clientKey) {
   return function (req, res, buf, encoding) {
@@ -77,6 +82,24 @@ export async function DeepInfraRequest(attachmentUrl) {
   } 
 
   return res;
+}
+
+export async function summarizeMessages(messagesText) {
+  const chatCompletion = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: "You are a helpful assistant that summarizes Discord discussions.",
+      },
+      {
+        role: "user",
+        content: `Here are the last messages from the channel:\n\n${messagesText}`,
+      },
+    ],
+  });
+
+  return chatCompletion.choices[0].message.content;
 }
 
 export async function InstallGlobalCommands(appId, commands) {
