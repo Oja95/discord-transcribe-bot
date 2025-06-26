@@ -1,5 +1,5 @@
 import 'dotenv/config';
-import { InstallGlobalCommands } from '../utils/utils.js';
+import {InstallGlobalCommands} from '../services/discord.js';
 
 const TRANSCRIBE_LAST_AUDIO_MESSAGE_COMMAND = {
   name: 'what-did-you-say',
