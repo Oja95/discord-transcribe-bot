@@ -5,6 +5,7 @@ import {
   InteractionResponseType
 } from 'discord-interactions';
 import { VerifyDiscordRequest, DiscordRequest, DeepInfraRequest } from './utils.js';
+import { ALL_COMMANDS } from './commands.js';
 
 // Create an express app
 const app = express();
@@ -39,7 +40,7 @@ app.post('/interactions', async function (req, res) {
 
     // could be imported from commands.js
     // TODO: Obtain these in a dynamic way via commands.js#ALL_COMMANDS
-    const commands = ['what-did-you-say-id', 'what-did-you-say', 'uwotm8', 'summary'];
+    const commands = ALL_COMMANDS.map(command => command.name);
 
     if (!commands.includes(name)) {
       // default to answering at least something on invalid use
