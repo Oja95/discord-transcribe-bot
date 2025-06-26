@@ -5,7 +5,7 @@ export function checkRateLimit(userId, channelId) {
     const now = Date.now();
     const userCooldown = 60 * 60 * 1000; // 1 hour
     const channelWindow = 60 * 60 * 1000; // 1 hour
-    const maxChannelUses = 3;
+    const maxChannelUses = 5;
 
     // --- Check user cooldown ---
     const lastUsed = userTimestamps.get(userId);

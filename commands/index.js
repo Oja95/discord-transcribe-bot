@@ -36,13 +36,13 @@ description: 'Fetches last n (default 50) messages, extracts all voice messages,
 
 const TEXT_SUMMARY_COMMAND = {
   name: 'text-summary',
-  description: 'Fetches last n (default 100) messages, summarizes.',
+  description: 'Fetches last n (default 300) messages, summarizes.',
   type: 1,
   options: [
     {
       type: 4,
       name: 'limit',
-      description: 'Amount of messages to look back.'
+      description: 'Amount of messages to look back (max 1000).'
     }
   ]
 };

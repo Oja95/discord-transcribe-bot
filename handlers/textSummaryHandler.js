@@ -3,12 +3,12 @@ import { DiscordRequest } from '../services/discord.js';
 import { summarizeMessages } from '../services/openai.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
 
-const MAX_INPUT_CHARACTERS = 16000;
+const MAX_INPUT_CHARACTERS = 32000;
 
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
   const { token, member, user } = body;
   const userId = member?.user?.id || user?.id;
-  const limit = Math.min(data?.options?.[0]?.value || 100, 500); // Clamp to 500
+  const limit = Math.min(data?.options?.[0]?.value || 300, 1000); // Clamp to 1000
 
   // Rate limit check
   const rateStatus = checkRateLimit(userId, channel_id);
@@ -63,7 +63,7 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
     console.log(`Channel ID: ${channel_id}`);
     console.log(`Messages: ${messages.length}`);
     if (wasTrimmed) console.log(`⚠️ Input was trimmed to ${MAX_INPUT_CHARACTERS} characters`);
-    console.log('Input preview:\n' + textMessages.slice(0, 5000));
+    console.log('Input preview:\n' + textMessages.slice(0, 10000));
     console.log(`---[truncated if long]---`);
     console.log(`================= OPENAI REQUEST END ===================\n`);
 
