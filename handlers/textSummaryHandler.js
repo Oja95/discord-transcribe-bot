@@ -1,5 +1,6 @@
 import { InteractionResponseType } from 'discord-interactions';
 import {DiscordRequest} from '../services/discord.js';
+import {summarizeMessages} from '../services/openai.js';
 
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
   const { token } = body;
