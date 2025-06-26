@@ -37,9 +37,6 @@ app.post('/interactions', async function (req, res) {
    */
   if (type === InteractionType.APPLICATION_COMMAND) {
     const { name } = data;
-
-    // could be imported from commands.js
-    // TODO: Obtain these in a dynamic way via commands.js#ALL_COMMANDS
     const commands = ALL_COMMANDS.map(command => command.name);
 
     if (!commands.includes(name)) {
@@ -49,7 +46,6 @@ app.post('/interactions', async function (req, res) {
     }
 
     let audioFileUrls = [];
-    let messageLink;
 
     if (name === 'what-did-you-say-id') {
       let messageId = data?.options[0]?.value;
@@ -59,8 +55,6 @@ app.post('/interactions', async function (req, res) {
       const re = /https?:\/\/discord.com\/channels\/\d+\/\d+\/(\d+)/;
       const re_match = messageId.match(re);
       if (re_match && re_match.length === 2) {
-        // save link for later use
-        messageLink = messageId;
         messageId = re_match[1];
       }
 
@@ -98,7 +92,6 @@ app.post('/interactions', async function (req, res) {
       const audioMessages = data.filter(message => message.attachments.length > 0 && message.attachments.filter(attachment => attachment.filename.endsWith(".ogg")).length > 0);
       if (audioMessages.length > 0) {
         audioFileUrls.push(audioMessages[0].attachments.filter(attachment => attachment.filename.endsWith(".ogg"))[0].url);
-        // messageLink = `https://discord.com/channels/${guild.id}/${audioMessages[0].channel_id}/${audioMessages[0].id}`;
       } else {
         res.send({
           type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
@@ -131,7 +124,7 @@ app.post('/interactions', async function (req, res) {
         return;
       }
     }
-  
+
     const transcriptionResults = await Promise.all(audioFileUrls.map(async audioUrl => {
       var aiResponse = await DeepInfraRequest(audioUrl);
       const aiData = await aiResponse.json();
