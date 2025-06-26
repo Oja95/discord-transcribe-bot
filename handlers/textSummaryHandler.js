@@ -1,10 +1,23 @@
 import { InteractionResponseType } from 'discord-interactions';
 import {DiscordRequest} from '../services/discord.js';
 import {summarizeMessages} from '../services/openai.js';
+import {checkRateLimit} from '../utils/rateLimiter.js';
 
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
-  const { token } = body;
-  const limit = data?.options?.[0]?.value || 100;
+  const { token, member, user } = body;
+  const userId = member?.user?.id || user?.id;
+
+  // Rate limit check
+  const rateStatus = checkRateLimit(userId, channel_id);
+  if (!rateStatus.allowed) {
+    return res.send({
+      type: InteractionResponseType.CHANNEL_MESSAGE_WITH_SOURCE,
+      data: {
+        content: `⏳ ${rateStatus.reason}`,
+        flags: 64 // ephemeral response
+      }
+    });
+  }
 
   const discordResponse = await DiscordRequest(`channels/${channel_id}/messages?limit=${limit}`, {
     method: 'GET',
@@ -19,6 +32,7 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
   }
 
   const messages = await discordResponse.json();
+  console.log(`Messages to be summarized: ${messages}`)
 
   const textMessages = messages
       .filter(m => m.content && !m.author.bot)
