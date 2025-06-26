@@ -14,7 +14,7 @@ export async function summarizeMessages(messagesText) {
         messages: [
             {
                 role: "system",
-                content: "You are a helpful assistant that summarizes Discord discussions.",
+                content: "You are a helpful assistant that summarizes Discord discussions. Use bullet point list.",
             },
             {
                 role: "user",
