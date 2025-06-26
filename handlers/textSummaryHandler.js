@@ -3,6 +3,8 @@ import { DiscordRequest } from '../services/discord.js';
 import { summarizeMessages } from '../services/openai.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
 
+const MAX_INPUT_CHARACTERS = 16000;
+
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
   const { token, member, user } = body;
   const userId = member?.user?.id || user?.id;
@@ -29,13 +31,21 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
 
   try {
     const messages = await fetchChannelMessages(channel_id, limit);
-    console.log(`To be summarized: ${messages}`);
-
-    const textMessages = messages
+    const messageLines = messages
         .filter(m => m.content && !m.author.bot)
         .reverse()
-        .map(m => `${m.author.username}: ${m.content}`)
-        .join('\n');
+        .map(m => `${m.author.username}: ${m.content}`);
+
+    let wasTrimmed = false;
+    let textMessages = messageLines.join('\n');
+
+    if (textMessages.length > MAX_INPUT_CHARACTERS) {
+      wasTrimmed = true;
+      while (textMessages.length > MAX_INPUT_CHARACTERS) {
+        messageLines.shift(); // remove oldest message
+        textMessages = messageLines.join('\n');
+      }
+    }
 
     if (!textMessages) {
       await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`, {
@@ -47,11 +57,16 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
       return;
     }
 
+    console.log(`[OpenAI Input - ${messages.length} messages]:\n${textMessages.slice(0, 4000)}\n---[truncated if long]---`);
     const summary = await summarizeMessages(textMessages);
+
+    const contentToSend = wasTrimmed
+        ? `⚠️ Only the most recent messages (under ${MAX_INPUT_CHARACTERS} characters) were included.\n\n${summary}`
+        : summary;
 
     await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`, {
       method: 'PATCH',
-      body: { content: summary },
+      body: { content: contentToSend },
     });
   } catch (err) {
     console.error('Text summary failed:', err);
