@@ -51,6 +51,7 @@ export async function InstallGlobalCommands(appId, commands) {
 
     try {
         await DiscordRequest(endpoint, { method: 'PUT', body: commands });
+        console.log("Global commands register initiated.");
     } catch (err) {
         console.error('Failed to install global commands:', err);
     }
