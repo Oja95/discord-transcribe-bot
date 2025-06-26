@@ -57,7 +57,16 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
       return;
     }
 
-    console.log(`[OpenAI Input - ${messages.length} messages]:\n${textMessages.slice(0, 4000)}\n---[truncated if long]---`);
+    console.log(`\n================= OPENAI REQUEST START =================`);
+    console.log(`Timestamp: ${new Date().toISOString()}`);
+    console.log(`User ID: ${userId}`);
+    console.log(`Channel ID: ${channel_id}`);
+    console.log(`Messages: ${messages.length}`);
+    if (wasTrimmed) console.log(`⚠️ Input was trimmed to ${MAX_INPUT_CHARACTERS} characters`);
+    console.log('Input preview:\n' + textMessages.slice(0, 5000));
+    console.log(`---[truncated if long]---`);
+    console.log(`================= OPENAI REQUEST END ===================\n`);
+
     const summary = await summarizeMessages(textMessages);
 
     const contentToSend = wasTrimmed
