@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { OpenAI } from 'openai';
+import {getSystemPromptForStyle} from '../utils/summaryStyles.js';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -8,13 +9,15 @@ const openai = new OpenAI({
 /**
  * Summarizes a block of Discord messages using OpenAI
  */
-export async function summarizeMessages(messagesText) {
+export async function summarizeMessages(messagesText, styleKey) {
+    const systemPromptStyle = getSystemPromptForStyle(styleKey);
+
     const chatCompletion = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
             {
                 role: "system",
-                content: "You are a helpful assistant that summarizes Discord discussions. Use bullet point list.",
+                content: `You are a helpful assistant that summarizes Discord discussions. ${systemPromptStyle}.`,
             },
             {
                 role: "user",

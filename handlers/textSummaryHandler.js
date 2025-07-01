@@ -8,7 +8,7 @@ const MAX_INPUT_CHARACTERS = 32000;
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
   const { token, member, user } = body;
   const userId = member?.user?.id || user?.id;
-  const limit = Math.min(data?.options?.[0]?.value || 300, 1000); // Clamp to 1000
+  const limit = Math.min(data?.options?.[0]?.value || 500, 1000); // Clamp to 1000
 
   // Rate limit check
   const rateStatus = checkRateLimit(userId, channel_id);
@@ -67,7 +67,8 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
     console.log(`---[truncated if long]---`);
     console.log(`================= OPENAI REQUEST END ===================\n`);
 
-    const summary = await summarizeMessages(textMessages);
+    const styleKey = data?.options?.find(opt => opt.name === 'style')?.value || 'professional';
+    const summary = await summarizeMessages(textMessages, styleKey);
 
     const contentToSend = wasTrimmed
         ? `⚠️ Only the most recent messages (under ${MAX_INPUT_CHARACTERS} characters) were included.\n\n${summary}`
