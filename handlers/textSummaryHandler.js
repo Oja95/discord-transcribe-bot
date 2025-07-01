@@ -4,6 +4,7 @@ import { summarizeMessages } from '../services/openai.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
 
 const MAX_INPUT_CHARACTERS = 32000;
+const MAX_RETRIES = 5;
 
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
   const { token, member, user } = body;
@@ -92,6 +93,7 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
 async function fetchChannelMessages(channelId, totalLimit) {
   let allMessages = [];
   let beforeId = null;
+  let retries = 0;
 
   while (allMessages.length < totalLimit) {
     const fetchLimit = Math.min(100, totalLimit - allMessages.length);
@@ -99,6 +101,17 @@ async function fetchChannelMessages(channelId, totalLimit) {
         (beforeId ? `&before=${beforeId}` : '');
 
     const response = await DiscordRequest(endpoint, { method: 'GET' });
+
+    if (response.status === 429) {
+      if (retries >= MAX_RETRIES) throw new Error("Too many rate limit retries for Discord API!");
+      retries++;
+
+      const data = await response.json();
+      const retryAfter = data.retry_after || 100; // milliseconds
+      console.warn(`⚠️ Rate limited by Discord. Retrying in ${retryAfter}ms...`);
+      await wait(retryAfter);
+      continue; // Retry same request
+    }
 
     if (!response.ok) {
       const err = await response.text();
@@ -110,7 +123,13 @@ async function fetchChannelMessages(channelId, totalLimit) {
 
     allMessages.push(...messages);
     beforeId = messages[messages.length - 1].id;
+
+    await wait(50); // 50ms between requests
   }
 
   return allMessages;
+}
+
+function wait(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
