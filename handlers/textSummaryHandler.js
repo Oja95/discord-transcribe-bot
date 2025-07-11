@@ -64,7 +64,7 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
     console.log(`Channel ID: ${channel_id}`);
     console.log(`Messages: ${messages.length}`);
     if (wasTrimmed) console.log(`⚠️ Input was trimmed to ${MAX_INPUT_CHARACTERS} characters`);
-    console.log('Input preview:\n' + textMessages.slice(0, 10000));
+    console.log('Input preview:\n' + textMessages.slice(0, 500));
     console.log(`---[truncated if long]---`);
     console.log(`================= OPENAI REQUEST END ===================\n`);
 
