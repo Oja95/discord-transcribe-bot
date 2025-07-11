@@ -103,6 +103,7 @@ async function fetchChannelMessages(channelId, totalLimit) {
     const response = await DiscordRequest(endpoint, { method: 'GET' });
 
     if (response.status === 429) {
+      console.log(`Rate limit exceeded, retry attempt number ${retries + 1}`);
       if (retries >= MAX_RETRIES) throw new Error("Too many rate limit retries for Discord API!");
       retries++;
 

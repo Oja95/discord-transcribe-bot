@@ -36,8 +36,7 @@ export async function DiscordRequest(endpoint, options) {
     });
 
     if (!res.ok) {
-        const data = await res.json();
-        console.error(`Discord API Error (${res.status}):`, JSON.stringify(data));
+        console.error(`Discord API Error (${res.status}) at endpoint ${endpoint}`);
     }
 
     return res;
