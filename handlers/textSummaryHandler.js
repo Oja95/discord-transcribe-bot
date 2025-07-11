@@ -4,7 +4,7 @@ import { summarizeMessages } from '../services/openai.js';
 import { checkRateLimit } from '../utils/rateLimiter.js';
 
 const MAX_INPUT_CHARACTERS = 32000;
-const MAX_RETRIES = 5;
+const MAX_RETRIES = 10;
 
 export async function handleTextSummaryCommand(data, channel_id, body, res) {
   const { token, member, user } = body;
@@ -127,7 +127,7 @@ async function fetchChannelMessages(channelId, totalLimit) {
     allMessages.push(...messages);
     beforeId = messages[messages.length - 1].id;
 
-    await wait(50); // 50ms between requests
+    await wait(500); // 500ms between requests
   }
 
   return allMessages;
