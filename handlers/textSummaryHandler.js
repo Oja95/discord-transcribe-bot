@@ -71,13 +71,9 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
     const styleKey = data?.options?.find(opt => opt.name === 'style')?.value || 'professional';
     const summary = await summarizeMessages(textMessages, styleKey);
 
-    const contentToSend = wasTrimmed
-        ? `⚠️ Only the most recent messages (under ${MAX_INPUT_CHARACTERS} characters) were included.\n\n${summary}`
-        : summary;
-
     await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`, {
       method: 'PATCH',
-      body: { content: contentToSend },
+      body: { content: summary },
     });
   } catch (err) {
     console.error('Text summary failed:', err);
