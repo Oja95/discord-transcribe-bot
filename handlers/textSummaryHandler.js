@@ -109,7 +109,7 @@ async function fetchChannelMessages(channelId, totalLimit) {
 
       const data = await response.json();
       const retryAfter = data.retry_after || 100; // milliseconds
-      console.warn(`Response data: ${data}`);
+      console.warn(`Response data: ${JSON.stringify(data)}`);
       console.warn(`⚠️ Rate limited by Discord. Retrying in ${retryAfter}ms...`);
       await wait(retryAfter);
       continue; // Retry same request
