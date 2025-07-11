@@ -1,32 +1,47 @@
-const userTimestamps = new Map();      // userId => timestamp
-const channelCounters = new Map();     // channelId => { count, resetAt }
+const userRequestLogs = new Map();      // userId => [timestamps]
+const channelCounters = new Map();      // channelId => { count, resetAt }
+
+const USER_LIMIT = 3;
+const CHANNEL_LIMIT = 10;
+const WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 export function checkRateLimit(userId, channelId) {
     const now = Date.now();
-    const userCooldown = 60 * 60 * 1000; // 1 hour
-    const channelWindow = 60 * 60 * 1000; // 1 hour
-    const maxChannelUses = 5;
 
-    // --- Check user cooldown ---
-    const lastUsed = userTimestamps.get(userId);
-    if (lastUsed && now - lastUsed < userCooldown) {
-        return { allowed: false, reason: "You're using this too frequently. Try again later." };
+    // --- User-specific rate limiting (3 per hour) ---
+    if (!userRequestLogs.has(userId)) {
+        userRequestLogs.set(userId, []);
     }
 
-    // --- Check channel quota ---
-    const channelData = channelCounters.get(channelId) || { count: 0, resetAt: now + channelWindow };
+    const recentUserTimestamps = userRequestLogs.get(userId).filter(ts => now - ts < WINDOW_MS);
+    userRequestLogs.set(userId, recentUserTimestamps); // prune old
+
+    if (recentUserTimestamps.length >= USER_LIMIT) {
+        return {
+            allowed: false,
+            reason: `You've hit the limit of ${USER_LIMIT} requests per hour. Try again later.`,
+        };
+    }
+
+    // --- Channel-specific rate limiting (10 per hour) ---
+    const channelData = channelCounters.get(channelId) || { count: 0, resetAt: now + WINDOW_MS };
 
     if (now > channelData.resetAt) {
         channelData.count = 0;
-        channelData.resetAt = now + channelWindow;
+        channelData.resetAt = now + WINDOW_MS;
     }
 
-    if (channelData.count >= maxChannelUses) {
-        return { allowed: false, reason: "Too many summaries requested in this channel recently. Try again later." };
+    if (channelData.count >= CHANNEL_LIMIT) {
+        return {
+            allowed: false,
+            reason: `Too many requests in this channel (max ${CHANNEL_LIMIT} per hour). Try again later.`,
+        };
     }
 
-    // Passed checks
-    userTimestamps.set(userId, now);
+    // ✅ Passed both checks: record usage
+    recentUserTimestamps.push(now);
+    userRequestLogs.set(userId, recentUserTimestamps);
+
     channelData.count += 1;
     channelCounters.set(channelId, channelData);
 
