@@ -73,7 +73,8 @@ export async function handleTextSummaryCommand(data, channel_id, body, res) {
 
     await DiscordRequest(`webhooks/${process.env.APP_ID}/${token}/messages/@original`, {
       method: 'PATCH',
-      body: { content: summary },
+      // Discord API limit allows max 2000 characters
+      body: { content: summary.slice(0, 2000) },
     });
   } catch (err) {
     console.error('Text summary failed:', err);
