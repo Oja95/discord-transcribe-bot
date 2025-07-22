@@ -6,13 +6,11 @@ export async function handleAudioTranscriptionCommand(name, data, channel_id, bo
   const { token } = body;
   let audioFileUrls = [];
   let messageId = data?.options?.[0]?.value;
-  let messageLink;
 
   if (name === 'what-did-you-say-id' && messageId) {
     const re = /https?:\/\/discord.com\/channels\/\d+\/\d+\/(\d+)/;
     const match = messageId.match(re);
     if (match?.[1]) {
-      messageLink = messageId;
       messageId = match[1];
     }
 
